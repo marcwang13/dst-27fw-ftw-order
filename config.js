@@ -1,6 +1,5 @@
-// 收單設定：把 Google Apps Script 部署後的網址貼在 SUBMIT_URL。
-// 留空時，網站會進入「傳單模式」：經銷商下載 Excel 訂單本後用 LINE / Email 傳給業務。
-// 試算表名稱：DESCENTE 27FW 鞋類 線上訂單。交單截止日 2026/11/13。
+// 收單設定。留空時網站進入「傳單模式」：經銷商下載 Excel 訂單本後用 LINE / Email 傳給業務。
+// 試算表：DESCENTE 27FW 鞋類 線上訂單。交單截止日 2026/11/13。
 window.SDR_CONFIG = {
-  SUBMIT_URL: ''
+  SUBMIT_URL: 'https://script.google.com/macros/s/AKfycbyRVPJ_0l3Hl6V9aHFrmrCqiTyZS8UCnr1klVVrmIs_lhHYn_15GQKNA5AQ0lkka0gz/exec'
 };
