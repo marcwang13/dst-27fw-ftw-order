@@ -709,7 +709,7 @@ async function offlineDownload(){
   if(ok){ const t=totals();
     $('#overlay').innerHTML=`<div class="scrim"><div class="panel" style="height:auto;margin:auto;max-width:440px;border-radius:8px"><h2>訂單本已下載</h2><div class="msg ok">${esc(S.dealer.store)}：${t.sty} 款色、${fmt(t.qty)} 件，零售金額 ${fmt(t.amt)}。</div><p style="margin:0">請在交單截止日 2026/11/13 前，把剛下載的 Excel 檔用 <b>LINE 或 Email</b> 傳給 DESCENTE 業務，業務收到後會幫你登錄訂單。</p><p style="margin:0;color:var(--muted);font-size:12px">頁面上的數量會保留在這台裝置，之後要修改可以直接改完再下載一次。</p><div style="display:flex;justify-content:flex-end"><button class="btn pri" data-close>好</button></div></div></div>`; }
 }
-function etaMon(m){ const n=parseInt(m,10); return n?((n%12)+1)+'月':(m||''); }
+function etaMon(m){ return m||''; }
 function brList(qty,meta){ return (meta&&meta.branches&&meta.branches.length)?meta.branches:[{name:'',qty}]; }
 function orderText(qty,meta){ const L=[]; let sty=0,tq=0,ta=0; const agg=lines(qty); const ks=new Set(); agg.forEach(l=>{ ks.add(l.k); tq+=l.qty; ta+=l.qty*l.price; }); sty=ks.size;
   L.push(`【DESCENTE 27FW 鞋類訂單】${meta.store||''}｜${meta.contact||''}${meta.phone?'｜'+meta.phone:''}${meta.oid?'｜'+meta.oid:''}`); L.push('交單截止：2026/11/13'); if(meta.note) L.push('備註：'+meta.note);
