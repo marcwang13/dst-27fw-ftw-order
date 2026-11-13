@@ -1344,8 +1344,8 @@ async function importBook(file){
     rowsOf('總表').forEach(row=>{ (row||[]).forEach((v,col)=>{ const k=txt(v); if(L[k]){ for(let j=col+1;j<=col+4;j++){ const x=row[j]; if(x!=null&&String(x).trim()){ dealer[L[k]]=String(x).trim(); break; } } } }); }); }
   const byEnColor={}, bySku={};
   ITEMS.forEach(i=>{ byEnColor[norm(i.en)+'|'+norm(i.color)]=i; if(i.sku&&!/待確認/.test(i.sku)) bySku[i.sku.toUpperCase()]=i; });
-  const SKIP=/訂購|零售|下單|售價|金額|合計|品名|顏色|款號|色碼|色號|月份|主題|Drop|品類|大類|性別|Icon|布料|尺寸|系列|商品|材質|備註|上市|ETA|圖|No\.|PAR|KEY/i;
-  let branches=null;
+  const SKIP=/訂購|零售|下單|售價|金額|合計|品名|顏色|款號|色碼|色號|月份|主題|Drop|品類|大類|性別|Icon|布料|尺寸|系列|商品|材質|備註|上市|ETA|圖|No\.|PAR|KEY|店點/i;
+  let branches=null; const storeQ={};
   if(wb.Sheets['分店配貨']){ const rows=rowsOf('分店配貨'); let h=-1,hdr=[]; for(let r=0;r<Math.min(rows.length,12);r++){ const t=(rows[r]||[]).map(txt); if(t.includes('KEY')&&t.includes('尺寸')){ h=r; hdr=t; break; } }
     if(h>=0){ const iK=hdr.indexOf('KEY'), iZ=hdr.indexOf('尺寸'), iT=hdr.indexOf('合計'), iE=hdr.indexOf('英文品名'), iC=hdr.indexOf('顏色'); const names=hdr.slice(iZ+1,iT>iZ?iT:undefined).filter(Boolean);
       branches=names.map(n=>({name:n,qty:{}}));
@@ -1370,13 +1370,21 @@ async function importBook(file){
       if(hasBr&&Object.keys(brs).length>1&&!branches) branches=Object.entries(brs).map(([n,q])=>({name:n,qty:q}));
       continue;
     }
-    const sizeKeys=Object.keys(map).filter(k=>!SKIP.test(k));
+    const sizeKeys=Object.keys(map).filter(k=>!SKIP.test(k)); let lastIt=null;
     for(let r=h+1;r<rows.length;r++){
       const row=rows[r]||[]; let it=null;
       const key=('KEY' in map)?txt(row[map['KEY']]):''; if(key&&BY[key]) it=BY[key];
       const en=('英文品名' in map)?row[map['英文品名']]:null, col=('顏色' in map)?row[map['顏色']]:null;
       if(!it&&en) it=byEnColor[norm(en)+'|'+norm(col)];
       if(!it&&skuKey){ const sv=txt(row[map[skuKey]]).toUpperCase(); if(sv) it=bySku[sv]; }
+      // 款色列底下的分店明細列：沒有 KEY／品名，店名在「店點」欄，數量記到上一個款色的該分店
+      const stN=('店點' in map)?txt(row[map['店點']]):'';
+      if(!it&&stN&&lastIt){
+        for(const z of sizeKeys){ let v=row[map[z]]; v=typeof v==='number'?v:parseInt(String(v??'').replace(/[^\d]/g,''),10); if(!(v>0)) continue; v=Math.min(9999,Math.round(v));
+          if(!lastIt.sizes.includes(z)){ bad.push(`${stN}：${lastIt.zh||lastIt.en} ${lastIt.color} ${z}`); continue; }
+          const sq=storeQ[stN]=storeQ[stN]||{}; (sq[lastIt.id]=sq[lastIt.id]||{})[z]=((sq[lastIt.id]||{})[z]||0)+v; cells++; }
+        continue; }
+      if(it) lastIt=it;
       let any=false;
       for(const z of sizeKeys){ let v=row[map[z]]; v=typeof v==='number'?v:parseInt(String(v??'').replace(/[^\d]/g,''),10); if(!(v>0)) continue; v=Math.min(9999,Math.round(v)); any=true;
         if(!it) continue;
@@ -1385,6 +1393,10 @@ async function importBook(file){
       if(any&&!it&&(en||key)) miss.push(`${name} 第 ${r+1} 列 ${en||key} ${col||''}`.trim());
     }
   }
+  if(!branches&&Object.keys(storeQ).length){
+    branches=Object.entries(storeQ).map(([n,q])=>({name:n,qty:q}));
+    const hasSt=new Set(); branches.forEach(b=>{ for(const id in b.qty) hasSt.add(id); });
+    for(const id in qty){ if(!hasSt.has(id)){ const it=BY[id]; miss.push(`${it?(it.zh||it.en)+' '+it.color:id}：有總數但沒有分店明細，未帶入`); } } }
   if(branches){ const a={}; branches.forEach(b=>{ for(const id in b.qty) for(const z in b.qty[id]){ a[id]=a[id]||{}; a[id][z]=(a[id][z]||0)+b.qty[id][z]; } }); return {qty:a,dealer,cells,miss,bad,branches}; }
   return {qty,dealer,cells,miss,bad};
 }
